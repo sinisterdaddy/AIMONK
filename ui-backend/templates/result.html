@@ -3,26 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction Results</title>
+    <title>AI Monk - Object Detection Results</title>
+    <style>
+        /* General styles */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1d3557;
+            margin-bottom: 20px;
+        }
+        .detected-objects {
+            font-size: 18px;
+            color: #1d3557;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .drawer-container {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .drawer-header {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1d3557;
+            cursor: pointer;
+            background-color: #f0f8ff;
+            padding: 10px 15px;
+            border: 1px solid #bcdff2;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .drawer-header:hover {
+            background-color: #d9efff;
+        }
+        .drawer-header span {
+            font-size: 16px;
+            color: #1d3557;
+        }
+        .drawer-content {
+            margin-top: 10px;
+            background-color: #f0f8ff;
+            border: 1px solid #bcdff2;
+            border-radius: 8px;
+            padding: 20px;
+            display: none;
+            overflow-x: auto;
+            font-family: monospace;
+            color: #333;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .image-container img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 3px solid #457b9d;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .downloads a {
+            display: inline-block;
+            margin: 10px;
+            color: white;
+            background-color: #457b9d;
+            font-size: 16px;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease-in-out;
+        }
+        .downloads a:hover {
+            background-color: #1d3557;
+        }
+        .btn-back {
+            margin-top: 20px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        .btn-back:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        // JavaScript for toggling the drawer
+        function toggleDrawer() {
+            const drawerContent = document.getElementById('drawer-content');
+            const drawerIcon = document.getElementById('drawer-icon');
+            if (drawerContent.style.display === 'none' || !drawerContent.style.display) {
+                drawerContent.style.display = 'block';
+                drawerIcon.textContent = '▲';
+            } else {
+                drawerContent.style.display = 'none';
+                drawerIcon.textContent = '▼';
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>Prediction Results</h1>
+    <div class="container">
+        <h1>AI Monk - Object Detection Results</h1>
 
-    <!-- Display the image with bounding boxes -->
-    <img src="data:image/png;base64,{{ img_base64 }}" alt="Annotated Image" />
+        <!-- Detected Objects -->
+        <div class="detected-objects">
+            Detected Objects: 
+            {% if predictions %}
+                {% for pred in predictions %}
+                    {{ pred['name'].capitalize() }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            {% else %}
+                No objects detected
+            {% endif %}
+        </div>
 
-    {% if predictions %}
-        <ul>
-            {% for pred in predictions %}
-                <li>
-                    Class: {{ pred['name'] }} <br>
-                    Confidence: {{ pred['confidence'] }} <br>
-                    Bounding Box: [{{ pred['xcenter'] }}, {{ pred['ycenter'] }}]
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No predictions found.</p>
-    {% endif %}
+        <!-- Drawer for Predictions JSON -->
+        <div class="drawer-container">
+            <div class="drawer-header" onclick="toggleDrawer()">
+                <span>View Predictions JSON</span>
+                <span id="drawer-icon">▼</span>
+            </div>
+            <div class="drawer-content" id="drawer-content">
+                <pre>{{ json_data }}</pre>
+            </div>
+        </div>
+
+        <!-- Annotated Image -->
+        <div>
+            <h2>Annotated Image</h2>
+            <div class="image-container">
+                <img src="data:image/png;base64,{{ img_base64 }}" alt="Annotated Image" />
+            </div>
+        </div>
+
+        <!-- File Download Links -->
+        <div class="downloads">
+            <a href="{{ json_url }}" download>Download JSON File</a>
+            <a href="{{ annotated_image_url }}" download>Download Annotated Image</a>
+        </div>
+
+        <!-- Back Button -->
+        <a href="/" class="btn-back">Upload Another Image</a>
+    </div>
 </body>
 </html>

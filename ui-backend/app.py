@@ -4,7 +4,11 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 import io
 import base64
-import numpy as np
+import json
+
+OUTPUT_FOLDER = 'outputs'
+if not os.path.exists(OUTPUT_FOLDER):
+    os.makedirs(OUTPUT_FOLDER)
 
 app = Flask(__name__)
 
@@ -36,15 +40,11 @@ def upload_image():
         
         # Get the image from the request
         image = request.files['image']
-
-        # Ensure the filename is safe and get the file extension
         image_filename = image.filename
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-
-        # Save the image to the specified path
         image.save(image_path)
 
-        # Construct the image URL (this URL will be accessible from the browser)
+        # Construct the image URL
         image_url = f'http://127.0.0.1:8000/uploads/{image_filename}'
 
         # Call AI backend for predictions
@@ -52,50 +52,70 @@ def upload_image():
 
         if response.status_code == 200:
             predictions = response.json().get('predictions', [])
-            
-            # Open the uploaded image for annotation
+
+            # Open the uploaded image
             img = Image.open(image_path)
             draw = ImageDraw.Draw(img)
-            
-            # Set font for annotations (you may need to adjust or use a different font)
+
+            # Set font for text
             font = ImageFont.load_default()
 
-            # Draw the bounding boxes and class names
+            # Get image dimensions
+            img_width, img_height = img.size
+
+            # Draw bounding boxes on the image
             for pred in predictions:
-                # Coordinates of the bounding box
-                x_center = pred['xcenter']
-                y_center = pred['ycenter']
-                width = pred['width']
-                height = pred['height']
-                
-                # Convert to bounding box corner coordinates
+                # Scale coordinates to match original image dimensions
+                x_center = pred['xcenter'] * img_width / 640
+                y_center = pred['ycenter'] * img_height / 640
+                width = pred['width'] * img_width / 640
+                height = pred['height'] * img_height / 640
+
+                # Convert center coordinates to corner coordinates
                 x_min = int(x_center - width / 2)
                 y_min = int(y_center - height / 2)
                 x_max = int(x_center + width / 2)
-                y_max = int(y_center + height / 2)
+                y_max = int(x_center + width / 2)
 
-                # Draw the bounding box
+                # Draw the bounding box and class label
                 draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=3)
-                
-                # Draw the class name
-                draw.text((x_min, y_min - 10), pred['name'], fill="red", font=font)
+                draw.text((x_min, y_min - 10), f"{pred['name']} ({pred['confidence']:.2f})", fill="red", font=font)
 
-            # Save the annotated image in memory
+            # Save the annotated image
+            annotated_image_filename = f"annotated_{image_filename}"
+            annotated_image_path = os.path.join(OUTPUT_FOLDER, annotated_image_filename)
+            img.save(annotated_image_path)
+
+            # Save predictions as a JSON file
+            json_filename = f"predictions_{os.path.splitext(image_filename)[0]}.json"
+            json_path = os.path.join(OUTPUT_FOLDER, json_filename)
+            with open(json_path, 'w') as json_file:
+                json.dump(predictions, json_file, indent=4)
+
+            # Convert the image to base64 for displaying in the HTML
             img_byte_array = io.BytesIO()
             img.save(img_byte_array, format='PNG')
             img_byte_array.seek(0)
-            
-            # Convert the image to base64 for sending it over HTTP
             img_base64 = base64.b64encode(img_byte_array.getvalue()).decode('utf-8')
 
-            # Return predictions along with the annotated image in base64 format
-            return render_template('result.html', predictions=predictions, img_base64=img_base64)
-        
+            # Render result page with predictions and download links
+            return render_template(
+                'result.html',
+                predictions=predictions,
+                json_data=json.dumps(predictions, indent=4),  # Pass JSON for display
+                img_base64=img_base64,
+                annotated_image_url=f"/outputs/{annotated_image_filename}",
+                json_url=f"/outputs/{json_filename}"
+            )
         else:
             return jsonify({'error': 'Error in AI backend response'}), response.status_code
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/outputs/<filename>')
+def serve_output_file(filename):
+    return send_from_directory(OUTPUT_FOLDER, filename)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8000)

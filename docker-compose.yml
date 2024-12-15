@@ -1,12 +1,22 @@
 services:
-  ui-backend:
-    build: ./ui-backend
+  ai-backend:
+    build:
+      context: ./ai-backend
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    volumes:
+      - ./ai-backend:/app:rw
+    restart: always
+
+  ui-backend:
+    build:
+      context: ./ui-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ui-backend:/app:rw
+    restart: always
     depends_on:
       - ai-backend
-
-  ai-backend:
-    build: ./ai-backend
-    ports:
-      - "5001:5001"

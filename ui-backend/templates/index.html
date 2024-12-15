@@ -3,13 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Object Detection</title>
+    <title>AI Monk - Upload Image</title>
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        /* Centered container */
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #1d3557;
+            font-weight: bold;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        p {
+            color: #6c757d;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .file-label:hover {
+            background-color: #0056b3;
+        }
+
+        .file-name {
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #1d3557;
+            font-style: italic;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .file-label, button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+    <script>
+        // JavaScript to display the selected file name
+        function displayFileName(event) {
+            const fileInput = event.target;
+            const fileName = fileInput.files[0]?.name || "No file chosen";
+            document.getElementById("file-name").textContent = fileName;
+        }
+    </script>
 </head>
 <body>
-    <h1>Upload an Image for Object Detection</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="image" required>
-        <button type="submit">Upload</button>
-    </form>
+    <div class="container">
+        <h1>Upload an Image for Object Detection</h1>
+        <p>Select an image to detect objects using AI Monk's advanced object detection system.</p>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <!-- File input and label -->
+            <label for="file-input" class="file-label">Choose File</label>
+            <input id="file-input" type="file" name="image" onchange="displayFileName(event)" required>
+            <div id="file-name" class="file-name">No file chosen</div>
+            
+            <!-- Submit button -->
+            <button type="submit">Upload Image</button>
+        </form>
+    </div>
 </body>
 </html>
