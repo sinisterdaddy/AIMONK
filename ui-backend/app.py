@@ -45,7 +45,7 @@ def upload_image():
         image.save(image_path)
 
         # Construct the image URL
-        image_url = f'http://127.0.0.1:8000/uploads/{image_filename}'
+        image_url = f'https://aimonkrk.vercel.app/uploads/{image_filename}'
 
         # Call AI backend for predictions
         response = requests.post(AI_BACKEND_URL, json={'image_url': image_url})
