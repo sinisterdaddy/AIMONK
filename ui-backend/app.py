@@ -5,12 +5,16 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 import base64
 import json
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
 
 OUTPUT_FOLDER = 'outputs'
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
-app = Flask(__name__)
+
 
 AI_BACKEND_URL = 'http://13.233.159.36:8080/predict'  # AI backend service
 
@@ -45,7 +49,8 @@ def upload_image():
         image.save(image_path)
 
         # Construct the image URL
-        image_url = f'https://aimonkrk.vercel.app/uploads/{image_filename}'
+        image_url = f"http://{request.host}/uploads/{image_filename}"
+
 
         # Call AI backend for predictions
         response = requests.post(AI_BACKEND_URL, json={'image_url': image_url})
