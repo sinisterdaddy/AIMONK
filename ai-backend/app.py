@@ -1,18 +1,18 @@
 from flask import Flask, request, jsonify
 import torch
 from PIL import Image
-import numpy as np
 import requests
 from io import BytesIO
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Path to YOLOv5 model
+# Path to YOLOv5 model (adjust accordingly)
 MODEL_PATH = 'yolov5s.pt'  # Ensure this is your correct model path (e.g., yolov5s, yolov5m)
 
-# Load YOLOv5 model using torch.hub
-model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODEL_PATH)
+# Load YOLOv5 model once when the app starts (to avoid reloading on each request)
+device = torch.device('cpu')  # Explicitly set device to 'cpu'
+model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODEL_PATH).to(device)
 
 # Define helper function to process image from URL
 def process_image_from_url(image_url):
@@ -33,13 +33,15 @@ def process_image_from_url(image_url):
 
 # Helper function to extract predictions from YOLOv5 output
 def run_inference(image):
-    # Run inference using YOLOv5 (directly on PIL image)
-    results = model(image)  # YOLOv5 model supports PIL images natively
+    try:
+        # Run inference using YOLOv5 (directly on PIL image)
+        results = model(image)  # YOLOv5 model supports PIL images natively
 
-    # Convert predictions to a pandas DataFrame
-    predictions = results.pandas().xywh[0]  # Extracting the DataFrame for the first image
-
-    return predictions
+        # Convert predictions to a pandas DataFrame
+        predictions = results.pandas().xywh[0]  # Extracting the DataFrame for the first image
+        return predictions
+    except Exception as e:
+        return None, str(e)
 
 # Define the prediction endpoint
 @app.route('/predict', methods=['POST'])
@@ -62,6 +64,9 @@ def predict():
         # Run inference
         predictions = run_inference(image)
 
+        if predictions is None:
+            return jsonify({'error': 'Inference failed'}), 500
+
         # Convert predictions into a list of dictionaries for response
         predictions_list = predictions.to_dict(orient="records")
 
@@ -72,4 +77,4 @@ def predict():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)  # Set debug=False for production
