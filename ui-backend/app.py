@@ -12,7 +12,7 @@ if not os.path.exists(OUTPUT_FOLDER):
 
 app = Flask(__name__)
 
-AI_BACKEND_URL = 'https://aimonkrk.onrender.com/predict'  # AI backend service
+AI_BACKEND_URL = 'http://15.206.128.201:8080/predict'  # AI backend service
 
 # Set the upload folder for image files
 UPLOAD_FOLDER = 'uploads'
